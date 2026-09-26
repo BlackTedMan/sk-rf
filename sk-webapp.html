@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>СК РФ — база дел</title>
+<style>
+:root{
+  --accent:#0a84ff; --bg:#17181a; --card:#1e1f22; --card2:#26272b; --field:#2b2c30;
+  --border:#34353a; --border2:#3c3d43; --text:#f2f2f2; --muted:#96969b;
+}
+*{box-sizing:border-box; font-family:"Segoe UI","SF Pro Display","Helvetica Neue",Arial,sans-serif;}
+html,body{height:100%; margin:0; background:var(--bg); color:var(--text);}
+body{padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);}
+#app{min-height:100%; display:flex; flex-direction:column;}
+a{color:var(--accent);}
+.hidden{display:none !important;}
+input,select,textarea{background:var(--field); border:1px solid var(--border2); border-radius:8px; padding:9px 11px; color:var(--text); font-size:14px; width:100%;}
+input:focus,select:focus,textarea:focus{outline:none; border-color:var(--accent);}
+button{background:var(--accent); color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:14px; cursor:pointer;}
+button:hover{filter:brightness(1.08);}
+button.secondary{background:var(--field); color:var(--text); border:1px solid var(--border2);}
+button.danger{background:#c94141;}
+label{font-size:12px; color:var(--muted); display:block; margin-bottom:4px;}
+.field{margin-bottom:12px;}
+.card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px;}
+.err{color:#ff6b6b; font-size:13px; margin-top:8px; min-height:16px;}
+.center-screen{flex:1; display:flex; align-items:center; justify-content:center; padding:16px;}
+.auth-box{width:100%; max-width:360px;}
+.tabs{display:flex; gap:8px; margin-bottom:16px;}
+.tabs button{flex:1;}
+header{background:var(--card2); border-bottom:1px solid var(--border); padding:12px 16px; padding-top:calc(12px + env(safe-area-inset-top,0px)); display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+header h1{font-size:15px; margin:0; color:var(--muted); font-weight:500; flex:1;}
+.userchip{font-size:13px; color:var(--muted);}
+nav{display:flex; gap:6px; padding:10px 16px; background:var(--bg); border-bottom:1px solid var(--border); overflow-x:auto;}
+nav button{background:transparent; color:var(--muted); border-radius:8px; white-space:nowrap;}
+nav button.active{background:var(--field); color:var(--text);}
+main{flex:1; padding:16px; max-width:1000px; width:100%; margin:0 auto;}
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px;}
+.dept-card{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; cursor:pointer;}
+.dept-card:hover{border-color:var(--accent);}
+.dept-card b{display:block; font-size:14px; margin-bottom:4px;}
+.dept-card span{font-size:12px; color:var(--muted);}
+.pill{display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; margin:2px 4px 2px 0;}
+.pill.open{background:#1f3a24; color:#7cd992;}
+.pill.closed{background:#3a1f1f; color:#e08585;}
+.case-row{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:8px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
+.case-row:hover{border-color:var(--accent);}
+.case-row .meta{font-size:12px; color:var(--muted);}
+.toolbar{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; align-items:center;}
+.toolbar select{width:auto;}
+.backlink{color:var(--muted); cursor:pointer; font-size:13px; margin-bottom:10px; display:inline-block;}
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th,td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--border);}
+th{color:var(--muted); font-weight:500;}
+.overlay{position:fixed; inset:0; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:16px; z-index:50;}
+.modal{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px; width:100%; max-width:520px; max-height:90vh; overflow-y:auto;}
+.modal h2{margin-top:0; font-size:16px;}
+.modal-close{float:right; background:transparent; color:var(--muted); padding:2px 8px;}
+.row2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+@media (max-width:480px){.row2{grid-template-columns:1fr;}}
+.evidence-item{display:flex; justify-content:space-between; gap:8px; padding:6px 0; border-bottom:1px solid var(--border); font-size:13px;}
+.loading{color:var(--muted); font-size:13px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="authScreen" class="center-screen">
+    <div class="auth-box card">
+      <div class="tabs">
+        <button id="tabLogin" class="active" onclick="showAuthTab('login')">Вход</button>
+        <button id="tabReg" class="secondary" onclick="showAuthTab('register')">Регистрация</button>
+      </div>
+
+      <form id="loginForm" onsubmit="return doLogin(event)">
+        <div class="field"><label>Логин</label><input id="loginUsername" required autocomplete="username"></div>
+        <div class="field"><label>Пароль</label><input id="loginPassword" type="password" required autocomplete="current-password"></div>
+        <button type="submit" style="width:100%">Войти</button>
+        <div class="err" id="loginErr"></div>
+      </form>
+
+      <form id="registerForm" class="hidden" onsubmit="return doRegister(event)">
+        <div class="field"><label>Логин</label><input id="regUsername" required></div>
+        <div class="field"><label>Пароль</label><input id="regPassword" type="password" required></div>
+        <div class="field"><label>ФИО</label><input id="regFullName" required></div>
+        <div class="field"><label>Должность</label><input id="regPosition" required></div>
+        <div class="field"><label>Отдел</label><select id="regDepartment"></select></div>
+        <div class="field"><label>Discord ID (необязательно)</label><input id="regDiscord"></div>
+        <button type="submit" style="width:100%">Зарегистрироваться</button>
+        <div class="err" id="regErr"></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="mainScreen" class="hidden">
+    <header>
+      <h1>СК РФ — база дел</h1>
+      <span class="userchip" id="userChip"></span>
+      <button class="secondary" onclick="logout()">Выйти</button>
+    </header>
+    <nav>
+      <button id="navDepts" class="active" onclick="goView('depts')">Отделы и дела</button>
+      <button id="navUsers" onclick="goView('users')">Сотрудники</button>
+    </nav>
+    <main id="mainContent"></main>
+  </div>
+
+</div>
+
+<div id="modalRoot"></div>
+
+<script>
+const API = "https://sk-server-mzo3.onrender.com";
+let state = { token: null, user: null, departments: [], categoriesCache: {}, users: [] };
+
+function safeGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function safeSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function safeDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+
+async function api(path, opts={}){
+  const headers = opts.headers || {};
+  if(opts.body) headers["Content-Type"] = "application/json";
+  if(state.token) headers["Authorization"] = "Bearer " + state.token;
+  const res = await fetch(API + path, {...opts, headers});
+  if(!res.ok){
+    let msg = "Ошибка запроса ("+res.status+")";
+    try{ const j = await res.json(); if(j.detail) msg = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail); }catch(e){}
+    throw new Error(msg);
+  }
+  if(res.status === 204) return null;
+  return res.json();
+}
+
+function showAuthTab(tab){
+  document.getElementById('loginForm').classList.toggle('hidden', tab!=='login');
+  document.getElementById('registerForm').classList.toggle('hidden', tab!=='register');
+  document.getElementById('tabLogin').className = tab==='login' ? '' : 'secondary';
+  document.getElementById('tabReg').className = tab==='register' ? '' : 'secondary';
+}
+
+async function loadDepartmentsForAuth(){
+  try{
+    const depts = await api('/departments');
+    const sel = document.getElementById('regDepartment');
+    sel.innerHTML = depts.map(d => `<option value="${d.id}">${d.code} — ${d.name}</option>`).join('');
+  }catch(e){}
+}
+
+async function doLogin(ev){
+  ev.preventDefault();
+  const err = document.getElementById('loginErr'); err.textContent = '';
+  const username = document.getElementById('loginUsername').value;
+  const password = document.getElementById('loginPassword').value;
+  try{
+    const data = await api('/auth/login', {method:'POST', body: JSON.stringify({username, password})});
+    onLoggedIn(data);
+  }catch(e){ err.textContent = e.message; }
+  return false;
+}
+
+async function doRegister(ev){
+  ev.preventDefault();
+  const err = document.getElementById('regErr'); err.textContent = '';
+  const payload = {
+    username: document.getElementById('regUsername').value,
+    password: document.getElementById('regPassword').value,
+    full_name: document.getElementById('regFullName').value,
+    position: document.getElementById('regPosition').value,
+    department_id: parseInt(document.getElementById('regDepartment').value),
+    discord_id: document.getElementById('regDiscord').value || null,
+  };
+  try{
+    const data = await api('/auth/register', {method:'POST', body: JSON.stringify(payload)});
+    onLoggedIn(data);
+  }catch(e){ err.textContent = e.message; }
+  return false;
+}
+
+function onLoggedIn(data){
+  state.token = data.access_token;
+  state.user = data.user;
+  safeSet('sk_token', state.token);
+  enterApp();
+}
+
+function logout(){
+  state.token = null; state.user = null;
+  safeDel('sk_token');
+  document.getElementById('mainScreen').classList.add('hidden');
+  document.getElementById('authScreen').classList.remove('hidden');
+}
+
+async function enterApp(){
+  document.getElementById('authScreen').classList.add('hidden');
+  document.getElementById('mainScreen').classList.remove('hidden');
+  document.getElementById('userChip').textContent = state.user.full_name + ' · ' + state.user.position + (state.user.is_admin ? ' · админ' : '');
+  state.departments = await api('/departments');
+  goView('depts');
+}
+
+function goView(view){
+  document.getElementById('navDepts').className = view==='depts' ? 'active' : '';
+  document.getElementById('navUsers').className = view==='users' ? 'active' : '';
+  if(view==='depts') renderDepartments();
+  if(view==='users') renderUsers();
+}
+
+function renderDepartments(){
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `<div class="grid">${state.departments.map(d => `
+    <div class="dept-card" onclick="openDepartment(${d.id})">
+      <b>${d.code}</b><span>${d.name}</span>
+    </div>`).join('')}</div>`;
+}
+
+async function openDepartment(deptId){
+  const dept = state.departments.find(d=>d.id===deptId);
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `<span class="backlink" onclick="goView('depts')">← Все отделы</span>
+    <h2 style="margin:6px 0 14px">${dept.code} — ${dept.name}</h2>
+    <div class="loading">Загрузка дел…</div>`;
+  const [cats, cases] = await Promise.all([
+    api(`/departments/${deptId}/categories`),
+    api(`/cases?department_id=${deptId}`),
+  ]);
+  state.categoriesCache[deptId] = cats;
+
+  let catFilter = 'all';
+  function draw(){
+    const filtered = catFilter==='all' ? cases : cases.filter(c=>c.category_id===parseInt(catFilter));
+    main.innerHTML = `<span class="backlink" onclick="goView('depts')">← Все отделы</span>
+      <h2 style="margin:6px 0 14px">${dept.code} — ${dept.name}</h2>
+      <div class="toolbar">
+        <select id="catFilterSel"><option value="all">Все категории</option>${cats.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select>
+        <button onclick="openNewCaseModal(${deptId})">+ Новое дело</button>
+      </div>
+      <div id="casesList"></div>`;
+    document.getElementById('catFilterSel').value = catFilter;
+    document.getElementById('catFilterSel').onchange = (e)=>{ catFilter = e.target.value; draw(); };
+    const list = document.getElementById('casesList');
+    if(filtered.length===0){ list.innerHTML = '<p class="loading">Дел нет.</p>'; return; }
+    list.innerHTML = filtered.map(c => {
+      const cat = cats.find(k=>k.id===c.category_id);
+      return `<div class="case-row" onclick="openCaseModal(${c.id})">
+        <div><b>№ ${c.number}</b> — ${c.article}<div class="meta">${cat ? cat.name : ''}</div></div>
+        <div class="pill ${c.status==='закончено'?'closed':'open'}">${c.status}</div>
+      </div>`;
+    }).join('');
+  }
+  draw();
+}
+
+function openNewCaseModal(deptId){
+  const cats = state.categoriesCache[deptId] || [];
+  showModal(`
+    <h2>Новое дело</h2>
+    <div class="field"><label>Номер дела</label><input id="ncNumber" required></div>
+    <div class="field"><label>Статья УК</label><input id="ncArticle" required></div>
+    <div class="field"><label>Категория</label><select id="ncCategory">${cats.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+    <div class="field"><label>Фигуранты</label><textarea id="ncSuspects" rows="2"></textarea></div>
+    <div class="field"><label>Потерпевший / заявитель</label><textarea id="ncComplainant" rows="2"></textarea></div>
+    <div class="err" id="ncErr"></div>
+    <button onclick="submitNewCase(${deptId})">Создать</button>
+  `);
+}
+
+async function submitNewCase(deptId){
+  const err = document.getElementById('ncErr');
+  const payload = {
+    number: document.getElementById('ncNumber').value,
+    article: document.getElementById('ncArticle').value,
+    category_id: parseInt(document.getElementById('ncCategory').value),
+    suspects: document.getElementById('ncSuspects').value || null,
+    complainant: document.getElementById('ncComplainant').value || null,
+  };
+  try{
+    await api('/cases', {method:'POST', body: JSON.stringify(payload)});
+    closeModal();
+    openDepartment(deptId);
+  }catch(e){ err.textContent = e.message; }
+}
+
+async function openCaseModal(caseId){
+  const c = await api(`/cases/${caseId}`);
+  const cat = Object.values(state.categoriesCache).flat().find(k=>k.id===c.category_id);
+  showModal(`
+    <h2>Дело № ${c.number} <span class="pill ${c.status==='закончено'?'closed':'open'}">${c.status}</span></h2>
+    <p class="meta">Категория: ${cat ? cat.name : c.category_id}</p>
+    <div class="field"><label>Статья УК</label><input id="ecArticle" value="${escAttr(c.article)}"></div>
+    <div class="field"><label>Фигуранты</label><textarea id="ecSuspects" rows="2">${escHtml(c.suspects||'')}</textarea></div>
+    <div class="field"><label>Потерпевший / заявитель</label><textarea id="ecComplainant" rows="2">${escHtml(c.complainant||'')}</textarea></div>
+    <div class="err" id="ecErr"></div>
+    <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+      <button onclick="saveCase(${c.id})">Сохранить</button>
+      ${c.status!=='закончено' ? `<button class="secondary" onclick="closeCaseModal(${c.id})">Закрыть дело</button>` : ''}
+    </div>
+    <h3 style="font-size:13px; color:var(--muted); margin-bottom:6px;">Доказательства</h3>
+    <div id="evList">${c.evidence.map(ev=>`<div class="evidence-item"><span>${escHtml(ev.title||'без названия')}</span><a href="${escAttr(ev.url_or_path)}" target="_blank" rel="noopener">открыть</a></div>`).join('') || '<p class="meta">Пока нет.</p>'}</div>
+    <div class="row2" style="margin-top:10px;">
+      <input id="evTitle" placeholder="Название">
+      <input id="evUrl" placeholder="Ссылка / путь">
+    </div>
+    <button class="secondary" style="margin-top:8px" onclick="addEvidence(${c.id})">+ Добавить доказательство</button>
+    ${c.outcome ? `<p style="margin-top:14px;"><b>Итог:</b> ${escHtml(c.outcome)}</p>` : ''}
+  `);
+}
+
+async function saveCase(caseId){
+  const err = document.getElementById('ecErr');
+  try{
+    await api(`/cases/${caseId}`, {method:'PATCH', body: JSON.stringify({
+      article: document.getElementById('ecArticle').value,
+      suspects: document.getElementById('ecSuspects').value,
+      complainant: document.getElementById('ecComplainant').value,
+    })});
+    closeModal();
+  }catch(e){ err.textContent = e.message; }
+}
+
+function closeCaseModal(caseId){
+  showModal(`
+    <h2>Закрыть дело</h2>
+    <div class="field"><label>Итог дела</label><textarea id="outcomeText" rows="3" required></textarea></div>
+    <div class="err" id="ccErr"></div>
+    <button onclick="submitCloseCase(${caseId})">Подтвердить закрытие</button>
+  `);
+}
+
+async function submitCloseCase(caseId){
+  const err = document.getElementById('ccErr');
+  try{
+    await api(`/cases/${caseId}/close`, {method:'POST', body: JSON.stringify({outcome: document.getElementById('outcomeText').value})});
+    closeModal();
+  }catch(e){ err.textContent = e.message; }
+}
+
+async function addEvidence(caseId){
+  const title = document.getElementById('evTitle').value;
+  const url = document.getElementById('evUrl').value;
+  if(!url) return;
+  await api(`/cases/${caseId}/evidence`, {method:'POST', body: JSON.stringify({title: title||null, url_or_path:url})});
+  openCaseModal(caseId);
+}
+
+async function renderUsers(){
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '<div class="loading">Загрузка сотрудников…</div>';
+  const users = await api('/users');
+  state.users = users;
+  main.innerHTML = `<div class="card" style="overflow-x:auto;"><table>
+    <tr><th>ФИО</th><th>Должность</th><th>Отдел</th><th>Логин</th><th></th></tr>
+    ${users.map(u=>{
+      const d = state.departments.find(dp=>dp.id===u.department_id);
+      return `<tr><td>${escHtml(u.full_name)}${u.is_admin?' 👑':''}</td><td>${escHtml(u.position)}</td><td>${d?d.code:''}</td><td>${escHtml(u.username)}</td><td><button class="secondary" onclick="showCharacteristic(${u.id})">Характеристика</button></td></tr>`;
+    }).join('')}
+  </table></div>`;
+}
+
+async function showCharacteristic(userId){
+  showModal('<div class="loading">Загрузка…</div>');
+  const c = await api(`/users/${userId}/characteristic?period_days=30`);
+  showModal(`
+    <h2>${escHtml(c.full_name)}</h2>
+    <p class="meta">${escHtml(c.position)} · за ${c.period_days} дн.</p>
+    <table style="margin:12px 0 14px;">
+      <tr><td>Всего действий</td><td>${c.total_actions}</td></tr>
+      <tr><td>Заведено дел</td><td>${c.cases_created}</td></tr>
+      <tr><td>Закрыто дел</td><td>${c.cases_closed}</td></tr>
+    </table>
+    <p>${escHtml(c.summary_text)}</p>
+  `);
+}
+
+function showModal(html){
+  document.getElementById('modalRoot').innerHTML = `<div class="overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal"><button class="modal-close" onclick="closeModal()">✕</button>${html}</div>
+  </div>`;
+}
+function closeModal(){ document.getElementById('modalRoot').innerHTML = ''; }
+
+function escHtml(s){ return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function escAttr(s){ return escHtml(s).replace(/"/g,'&quot;'); }
+
+(async function init(){
+  loadDepartmentsForAuth();
+  const saved = safeGet('sk_token');
+  if(saved){
+    state.token = saved;
+    try{
+      state.user = await api('/auth/me');
+      enterApp();
+    }catch(e){
+      safeDel('sk_token'); state.token = null;
+    }
+  }
+})();
+</script>
+</body>
+</html>
